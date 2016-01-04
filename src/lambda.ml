@@ -3,6 +3,9 @@ open List;;
 
 type info = {line : int}
 
+exception NoRuleApplies
+let (|>) x f = f x
+let (|-) f g = fun x -> g (f x)
 let getOrElse defVal = function
   | Some(v) -> v
   | None    -> defVal
@@ -90,4 +93,4 @@ let rec eval1 ctx t = match t with
     let t1' = eval1 ctx t1 in
     TmApp(fi,t1',t2)
   | _ ->
-    raise NotRulesApplies;;
+    raise NoRuleApplies;;
