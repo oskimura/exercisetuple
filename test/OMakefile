@@ -1,5 +1,7 @@
 .PHONY: all clean check
 OCAMLINCLUDES += ../src
+USE_OCAMLFIND = true
+
 
 FILES[] =
 	lambda_test
