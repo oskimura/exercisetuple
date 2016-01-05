@@ -135,6 +135,7 @@
 
 FILES[] =
 	lambda
+	calc
 	main
 #    file1
 #    file2
