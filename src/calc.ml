@@ -39,4 +39,3 @@ let rec eval1 t = match t with
 let rec eval t =
   try let t' = eval t in eval t' with NoRuleApplies -> t;;
 
-
