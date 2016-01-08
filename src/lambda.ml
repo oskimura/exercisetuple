@@ -3,7 +3,11 @@ open List;;
 
 type info = {line : int}
 
+type bind = NameBind
+type context = (string * bind) list
+
 exception NoRuleApplies
+
 let (|>) x f = f x
 let (|-) f g = fun x -> g (f x)
 let getOrElse defVal = function
