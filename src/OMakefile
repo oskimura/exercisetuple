@@ -138,6 +138,7 @@ FILES[] =
 	calc
 	typedlambda
 	main
+	support
 #    file1
 #    file2
 #
