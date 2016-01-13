@@ -5,6 +5,7 @@ USE_OCAMLFIND = true
 
 FILES[] =
 	lambda_test
+	typedlambda_test
 
 OCAMLPACKS[] =
 	oUnit
