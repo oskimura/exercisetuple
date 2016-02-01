@@ -139,6 +139,8 @@ FILES[] =
 	typedlambda
 	main
 	support
+	parse
+	lex
 #    file1
 #    file2
 #
