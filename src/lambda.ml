@@ -40,10 +40,16 @@ let rec replacelist f x list =
      else
        y :: (replacelist f x ys);;
 
+
 let pickfreshname ctx x =
   match findlist (fun y -> x = (fst y)) ctx  with
-    Some (a,b) -> ((replacelist (fun (c,d) -> a = c) (a,(b+1)) ctx),(a ^string_of_int(b+1)))
-  | None -> (((x,0)::ctx),(x ^ "0")) ;;
+    Some (a,b) ->
+    ((replacelist (fun (c,d) -> a = c)
+                  (a^"'",b)
+                  ctx),
+     (a ^ "'"))
+  | None ->
+     (((x,NameBind)::ctx),x) ;;
 
 let rec ctxlength ctx =
   List.length ctx;;
@@ -59,10 +65,10 @@ let rec name2index fi ctx x =
    match ctx with
     [] -> None
   | ((y,_)::ys) ->
-   if y == x then
+   if y = x then
      Some(n)
    else
-     walk fi ctx  x (n+1)
+     walk fi ys  x (n+1)
   in
    walk fi ctx x 0
 ;;
