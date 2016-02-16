@@ -44,10 +44,11 @@ let rec replacelist f x list =
 let pickfreshname ctx x =
   match findlist (fun y -> x = (fst y)) ctx  with
     Some (a,b) ->
-    ((replacelist (fun (c,d) -> a = c)
-                  (a^"'",b)
-                  ctx),
-     (a ^ "'"))
+    (* ((replacelist (fun (c,d) -> a = c) *)
+    (*               (a^"'",b) *)
+    (*               ctx), *)
+    (*  (a ^ "'")) *)
+    ((a^ "'",NameBind)::ctx, a^ "'")
   | None ->
      (((x,NameBind)::ctx),x) ;;
 

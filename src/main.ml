@@ -15,7 +15,7 @@ flush stdout;
       let strs = 
       List.map (fun cmd -> 
         match cmd with
-           Lambda.Eval(i,t) -> Lambda.printnm ctx t
+           Lambda.Eval(i,t) -> Lambda.printnm [] (Lambda.eval [] t)
          | Lambda.Bind(i,str,bind) -> str 
          )
       cmds
