@@ -10,6 +10,10 @@ open Lambda
 %token <Support.Error.info> DOT
 %token <Support.Error.info> SEMI
 %token <Support.Error.info> EOF
+%token <Support.Error.info> COLON
+%token <Support.Error.info> BOOL
+%token <Support.Error.info> ARROW
+%token <Support.Error.info> UNIT
 
 %start toplevel
 %type <Lambda.context -> (Lambda.command list * Lambda.context) > toplevel
@@ -37,17 +41,37 @@ command :
 
 exp:
 AppTerm {$1}
-|LAMBDA ID DOT exp
-{ fun ctx ->
-  let ctx1 = Lambda.addname ctx $2.v in
-  Lambda.TmAbs({line=0}, $2.v, $4 ctx1)
+|LAMBDA ID COLON Type DOT exp
+{ 
+fun ctx ->
+let ctx1 = Lambda.addname ctx $2.v in
+TmAbs({line=0},$2.v, $4 ctx, ($6 ctx1))
 };
 
+
+Type: 
+ArrowType {$1}
+
+AType:
+LPAREN Type RPAREN
+{$2}
+|BOOL
+{fun ctx -> Lambda.TyBool}
+|UNIT
+{fun ctx -> Lambda.TyUnit}
+
+
+ArrowType:
+AType ARROW ArrowType
+{fun ctx -> TyArr($1 ctx, $3 ctx)}
+| AType  {print_string "atype";$1};
 
 AppTerm:
 Aterm {$1}
 |AppTerm Aterm
-{fun ctx ->
+{
+print_string "b";print_newline();
+fun ctx ->
 let e1 = $1 ctx in
 let e2 = $2 ctx in
  Lambda.TmApp((Lambda.tmInfo e1),e1, e2)

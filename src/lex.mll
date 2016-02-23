@@ -8,6 +8,11 @@ let reservedWords = [
 (";" , fun i -> Parse.SEMI i);
 ( "(", fun i -> Parse.LPAREN i);
 ( ")", fun i -> Parse.RPAREN i);
+(":", fun i -> Parse.COLON i);
+("bool", fun i -> print_string "bool" ;Parse.BOOL i);
+("->", fun i -> Parse.ARROW i);
+("unit", fun i -> Parse.UNIT i);
+
 ]
 
 type buildfun = info -> Parse.token
@@ -29,7 +34,9 @@ let info lexbuf =
 rule main = parse 
  ['A'-'Z' 'a'-'z']['A'-'Z' 'a'-'z' '_' '0'-'9']*
   { createID(info lexbuf) (text lexbuf) }
-| ['.' ';' '(' ')']
+| "->"
+   { createID(info lexbuf) (text lexbuf) }
+| ['.' ';' '(' ')' ':' ]
    { createID(info lexbuf) (text lexbuf) }
 | eof { Parse.EOF(info lexbuf) }
 | [' ' '\009' '\012' ]+{ main lexbuf }
