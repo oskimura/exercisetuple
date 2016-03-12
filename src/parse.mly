@@ -14,6 +14,12 @@ open Lambda
 %token <Support.Error.info> BOOL
 %token <Support.Error.info> ARROW
 %token <Support.Error.info> UNIT
+%token <Support.Error.info> STRING
+%token <Support.Error.info> FLOAT
+%token <Support.Error.info> INT
+%token <string Support.Error.withinfo> STRINGV
+%token <float Support.Error.withinfo> FLOATV
+%token <int Support.Error.withinfo> INTV
 
 %start toplevel
 %type <Lambda.context -> (Lambda.command list * Lambda.context) > toplevel
@@ -59,6 +65,12 @@ LPAREN Type RPAREN
 {fun ctx -> Lambda.TyBool}
 |UNIT
 {fun ctx -> Lambda.TyUnit}
+|STRING
+{fun ctx -> Lambda.TyString}
+|INT
+{fun ctx -> Lambda.TyInt}
+|FLOAT
+{fun ctx -> Lambda.TyFloat}
 
 
 ArrowType:
@@ -89,6 +101,14 @@ match (Lambda.name2index $1.i ctx $1.v) with
 | None ->
    raise NoRuleApplies
 };
+}
+| STRINGV
+{fun ctx -> Lambda.TmString({line=0},$1.v)}
+| INTV
+{ fun ctx -> Lambda.TmInt({line=0}, $1.v)}
+| FLOATV
+{fun ctx -> Lambda.TmFloat({line=0}, $1.v)}
+;
 
 (*
 exp :

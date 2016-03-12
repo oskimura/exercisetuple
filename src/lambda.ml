@@ -7,6 +7,9 @@ type ty = TyArr of ty * ty
 | TyBool
 | TyUnit
 | TyWrong of string
+| TyString
+| TyFloat
+| TyInt
 
 type bind = NameBind
 | VarBind of ty
@@ -38,6 +41,9 @@ type term =
 | TmFalse of info
 | TmIf of info * term * term * term
 | TmUnit of info
+| TmString of info * string 
+| TmFloat of info * float
+| TmInt of info * int
 
 type command =
   Bind of info * string * bind
@@ -121,6 +127,9 @@ match t with
 | TmFalse(fi) -> fi
 | TmTrue(fi) -> fi
 | TmIf(fi,_,_,_) -> fi
+| TmString(fi,_) -> fi
+| TmFloat(fi,_) -> fi
+| TmInt(fi,_) -> fi
 
 let rec print_type ty =
 match ty with
@@ -158,6 +167,10 @@ let termSift d t =
 " then " ^ (printnm ctx t2) ^ 
 " else " ^ (printnm ctx t3);;
 
+| TmString(fi,str) -> str
+| TmFloat(fi,f) -> string_of_float f
+| TmInt(fi,n) -> string_of_int n
+;;
 
 let tmmap onvar c t =
 let rec walk c t = match t with
@@ -168,6 +181,9 @@ TmVar(fi,x,n) -> onvar fi c x n
 | TmFalse(fi) as t -> t
 | TmIf(fi,t1,t2,t3) ->TmIf(fi,walk c t1,walk c t2,walk c t3)
 | TmUnit(fi) as t -> t
+| TmString(fi,str) as t -> t
+| TmFloat(fi,f) as t -> t
+| TmInt(fi,n) as t -> t
 in walk c t
 
 (* let termSift d t = *)
@@ -221,10 +237,8 @@ match t with
   TmApp(fi,TmAbs(_,x,_,t12),v2) when isval ctx v2 ->
    termSubstTop v2 t12
 | TmApp(fi,v1,t2) when isval ctx v1 ->
-  print_string "tmapp2\n";
    let t2' = eval1 ctx t2 in TmApp(fi,v1,t2')
 | TmApp(fi,t1,t2) ->
-  print_string "tmapp3\n";
     let t1' = eval1 ctx t1 in
     TmApp(fi,t1',t2)
   | _ ->
@@ -274,6 +288,9 @@ match t with
    else TyWrong ""
   else TyWrong ""
 | TmUnit(_) -> TyUnit
+| TmString(_,_) -> TyString
+| TmFloat(_,_) -> TyFloat
+| TmInt(_,_) -> TyInt
 
 (*   *)
 let t1 = TmVar({line=1},0,1)
