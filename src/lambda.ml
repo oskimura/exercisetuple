@@ -234,6 +234,12 @@ let termSubstTop s t =
 let rec isval ctx t = match t with
   TmAbs(_,_,_) -> true
   TmAbs(_,_,_,_) -> true
+ | TmString(_,_) -> true
+ | TmFloat(_,_) -> true
+ | TmInt(_,_) -> true
+ | TmTrue(_) -> true
+ | TmFalse(_) -> true
+ | TmUnit(_) -> true
  | _ -> false;;
 
 

@@ -73,6 +73,10 @@ LPAREN Type RPAREN
 {fun ctx -> Lambda.TyUnit}
 |STRING
 {fun ctx -> Lambda.TyString}
+|FLOAT
+{fun ctx -> Lambda.TyFloat}
+|STRING
+{fun ctx -> Lambda.TyString}
 |INT
 {fun ctx -> Lambda.TyInt}
 |FLOAT
