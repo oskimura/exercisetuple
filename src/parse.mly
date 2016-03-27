@@ -17,6 +17,9 @@ open Lambda
 %token <Support.Error.info> STRING
 %token <Support.Error.info> FLOAT
 %token <Support.Error.info> INT
+%token <Support.Error.info> LET
+%token <Support.Error.info> IN
+%token <Support.Error.info> EQ
 %token <string Support.Error.withinfo> STRINGV
 %token <float Support.Error.withinfo> FLOATV
 %token <int Support.Error.withinfo> INTV
@@ -47,6 +50,9 @@ command :
 
 exp:
 AppTerm {$1}
+LET ID EQ exp IN exp
+{ 
+TmLet({line=0}, $2.v,($4 (addname ctx $2.v)),($6 (addname ctx $2.v)))}
 |LAMBDA ID COLON Type DOT exp
 { 
 fun ctx ->

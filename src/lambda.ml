@@ -44,6 +44,7 @@ type term =
 | TmString of info * string 
 | TmFloat of info * float
 | TmInt of info * int
+| TmLet of info * string * term * term
 
 type command =
   Bind of info * string * bind
@@ -129,6 +130,7 @@ match t with
 | TmIf(fi,_,_,_) -> fi
 | TmString(fi,_) -> fi
 | TmFloat(fi,_) -> fi
+| TmLet(fi,_,_,_) -> fi
 | TmInt(fi,_) -> fi
 
 let rec print_type ty =
@@ -169,6 +171,9 @@ let termSift d t =
 
 | TmString(fi,str) -> str
 | TmFloat(fi,f) -> string_of_float f
+| TmLet(fi,v,t1,t2) ->
+let ctx1 = addname ctx v in
+"let " ^  v ^ " = " ^(printnm ctx t1) ^ " in " ^ (printnm ctx1 t2)
 | TmInt(fi,n) -> string_of_int n
 ;;
 
@@ -183,6 +188,7 @@ TmVar(fi,x,n) -> onvar fi c x n
 | TmUnit(fi) as t -> t
 | TmString(fi,str) as t -> t
 | TmFloat(fi,f) as t -> t
+| TmLet(fi,v,t1,t2) -> TmLet(fi,v, walk c t1, walk c t2)
 | TmInt(fi,n) as t -> t
 in walk c t
 
@@ -243,7 +249,14 @@ match t with
     TmApp(fi,t1',t2)
   | _ ->
     raise NoRuleApplies;;
+| TmLet(_,_,t1,v) when isval ctx v ->
+ termSubstTop v t1
 
+| TmLet(fi,x,v,t2) when isval ctx v ->
+   termSubstTop v t2
+| TmLet(fi,x,t1,t2) ->
+ let t1' = eval1 ctx t1 in
+ TmLet(fi,x,t1',t2)
 let rec eval ctx t =
 try let t' = eval1 ctx t
 in  eval ctx t' 
@@ -290,6 +303,9 @@ match t with
 | TmUnit(_) -> TyUnit
 | TmString(_,_) -> TyString
 | TmFloat(_,_) -> TyFloat
+| TmLet(fi,v,t1,t2) ->
+let ctx' = addbinding ctx v (VarBind (typeof ctx t1)) in
+(typeof ctx' t2)
 | TmInt(_,_) -> TyInt
 
 (*   *)

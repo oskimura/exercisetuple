@@ -16,6 +16,9 @@ let reservedWords = [
 ("string", fun i-> Parse.STRING i);
 ("int", fun i -> Parse.INT i);
 ("float", fun i -> Parse.INT i);
+("let", fun i -> Parse.LET i);
+("in", fun i -> Parse.IN i);
+("=", fun i -> Parse.EQ i);
 ]
 
 let stringBuffer = ref (Bytes.create 2048)
@@ -43,7 +46,7 @@ rule main = parse
   { createID(info lexbuf) (text lexbuf) }
 | "->"
    { createID(info lexbuf) (text lexbuf) }
-| ['.' ';' '(' ')' ':' ]
+| ['.' ';' '(' ')' ':' '=']
    { createID(info lexbuf) (text lexbuf) }
 | eof { Parse.EOF(info lexbuf) }
 | [' ' '\009' '\012' ]+{ main lexbuf }
