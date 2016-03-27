@@ -257,6 +257,10 @@ match t with
 | TmLet(fi,x,t1,t2) ->
  let t1' = eval1 ctx t1 in
  TmLet(fi,x,t1',t2)
+| TmIf(fi,TmTrue(_),t2,t3) ->
+  t2
+| TmIf(fi,TmFalse(_),t2,t3) ->
+  t3
 let rec eval ctx t =
 try let t' = eval1 ctx t
 in  eval ctx t' 
