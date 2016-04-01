@@ -146,20 +146,12 @@ let (ctx',x') = pickfreshname ctx x in
    "(lambda " ^ x' ^  (print_type ty) ^ " . " ^ (printnm ctx' t1) ^  ")" 
  | TmApp(fi,t1,t2) ->
   "(" ^ printnm ctx t1 ^ " " ^ printnm ctx t1 ^ ")"
- | TmVar (fi, x, n) ->
-   if ctxlength ctx = n then
-     index2name fi ctx  x |> getOrElse "[]"
-   else
-     "bad idx" ;;
 
-let termSift d t =
-  let rec walk c t = match t with
-   TmVar (fi,x,n) -> 
-     if x >= c then TmVar(fi,x+d,n+d)
-     else TmVar(fi,x,n+d)
-   | TmAbs(fi,x,t1) -> TmAbs(fi,x,walk(c+1) t1)
-   | TmApp(fi,t1,t2) -> TmApp(fi,walk c t1, walk c t2)
-  in walk 0 t;;
+| TmVar (fi, x, n) ->
+   if ctxlength ctx = n then
+   let v = ((index2name fi ctx  x) |> getOrElse "[]") in
+     v
+   else
      "bad indx"
 | TmUnit(fi) -> "unit"
 | TmTrue(fi) -> "true"
@@ -267,6 +259,14 @@ match t with
   t2
 | TmIf(fi,TmFalse(_),t2,t3) ->
   t3
+| TmVar(fi,n,_) ->
+print_string "tmvar";
+(match  getbinding fi ctx n with
+    TmAbbBind(t,_) -> print_string "t"; t
+    | _ -> raise NoRuleApplies)
+| _ ->
+    raise NoRuleApplies
+;;
 let rec eval ctx t =
 try let t' = eval1 ctx t
 in  eval ctx t' 
