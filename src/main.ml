@@ -12,23 +12,25 @@ let result = (Parse.toplevel Lex.main lexbuf) in
 flush stdout;
 let cmds,ctx = result [] in
 flush stdout;
-      let strs = 
-      List.map (fun cmd -> 
-          print_int (Lambda.ctxlength ctx);
-          print_newline();
+let _ = 
+      List.fold_right(fun cmd ctx' ->
         match cmd with
-           Lambda.Eval(i,t) -> Lambda.printnm [] (Lambda.eval [] t)
           Lambda.Eval(i,t) ->
-               let _ = Lambda.typeof [] t in
-               Lambda.printnm [] (Lambda.eval [] t)
-         | Lambda.Bind(i,str,bind) -> str 
-         )
-      cmds
-      in
-      List.iter (fun str ->
-        print_string str
-      )
-      strs;print_newline(); flush stdout
+          let _ = Lambda.typeof ctx' t in
+               print_string (Lambda.printnm ctx' (Lambda.eval ctx' t));
+               ctx'
+         | Lambda.Bind(i,x,b) ->
+         (match b with 
+          Lambda.TmAbbBind(t,ty) ->
+             let t' = Lambda.eval ctx' t in
+                 Lambda.addbinding ctx' x (Lambda.TmAbbBind(t',ty))
+          | bind ->
+          Lambda.addbinding ctx' x bind)
+)
+cmds
+ctx
+ in
+print_newline();flush stdout
     done
  with Parsing.Parse_error ->
    print_string "parse error";

@@ -46,6 +46,11 @@ type term =
 | TmInt of info * int
 | TmLet of info * string * term * term
 
+type bind = NameBind
+| VarBind of ty
+| TmAbbBind of term * (ty option)
+
+type context = (string * bind) list
 type command =
   Bind of info * string * bind
 | Eval of info * term
