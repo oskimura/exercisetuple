@@ -10,6 +10,7 @@ type ty = TyArr of ty * ty
 | TyString
 | TyFloat
 | TyInt
+| TyRecord of (string * ty) list
 
 type bind = NameBind
 | VarBind of ty
@@ -45,6 +46,7 @@ type term =
 | TmFloat of info * float
 | TmInt of info * int
 | TmLet of info * string * term * term
+| TmRecord of info * (string * term) list
 
 type bind = NameBind
 | VarBind of ty
@@ -137,6 +139,7 @@ match t with
 | TmFloat(fi,_) -> fi
 | TmLet(fi,_,_,_) -> fi
 | TmInt(fi,_) -> fi
+| TmRecord(fi,_) -> fi
 
 let rec print_type ty =
 match ty with
@@ -172,6 +175,16 @@ let (ctx',x') = pickfreshname ctx x in
 let ctx1 = addname ctx v in
 "let " ^  v ^ " = " ^(printnm ctx t1) ^ " in " ^ (printnm ctx1 t2)
 | TmInt(fi,n) -> string_of_int n
+| TmRecord(fi,fields) ->
+  let pf i (li,ti) =
+     (if(li <> ((string_of_int i))) then (li ^ "=") else "") ^ printnm ctx ti
+  in
+   let rec p i l = match l with
+      [] -> ""
+     |[f] -> pf i f
+     |f::rest ->
+              (pf i f) ^ "," ^ (p (i+1) rest)
+    in "{" ^ (p 1 fields) ^ "}"
 ;;
 
 let tmmap onvar c t =
@@ -187,6 +200,10 @@ TmVar(fi,x,n) -> onvar fi c x n
 | TmFloat(fi,f) as t -> t
 | TmLet(fi,v,t1,t2) -> TmLet(fi,v, walk c t1, walk c t2)
 | TmInt(fi,n) as t -> t
+| TmRecord(fi,fields) -> TmRecord(fi,List.map
+   (fun(li,ti) ->
+    (li,walk c ti))
+   fields)
 in walk c t
 
 (* let termSift d t = *)
@@ -269,6 +286,16 @@ print_string "tmvar";
 (match  getbinding fi ctx n with
     TmAbbBind(t,_) -> print_string "t"; t
     | _ -> raise NoRuleApplies)
+| TmRecord(fi,fields) ->
+    let rec evalfield l = match l with
+  [] -> raise NoRuleApplies
+ |(l,v)::rest when isval ctx v ->
+    let rest' = evalfield rest in (l,v)::rest'
+ |(l,t)::rest ->
+   let t' = eval1 ctx t in (l,t')::rest
+
+ in let fields' = evalfield fields in
+ TmRecord(fi,fields')
 | _ ->
     raise NoRuleApplies
 ;;
@@ -322,6 +349,10 @@ match t with
 let ctx' = addbinding ctx v (VarBind (typeof ctx t1)) in
 (typeof ctx' t2)
 | TmInt(_,_) -> TyInt
+| TmRecord(_,fields) ->
+TyRecord((List.map
+(fun(v,t) -> (v,(typeof ctx t)))
+ fields))
 
 (*   *)
 let t1 = TmVar({line=1},0,1)

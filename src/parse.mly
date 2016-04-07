@@ -20,6 +20,9 @@ open Lambda
 %token <Support.Error.info> LET
 %token <Support.Error.info> IN
 %token <Support.Error.info> EQ
+%token <Support.Error.info> LCURLY
+%token <Support.Error.info> RCURLY
+%token <Support.Error.info> COMMA
 %token <string Support.Error.withinfo> STRINGV
 %token <float Support.Error.withinfo> FLOATV
 %token <int Support.Error.withinfo> INTV
@@ -102,6 +105,12 @@ let e2 = $2 ctx in
 Aterm:
 LPAREN exp RPAREN
  {$2}
+| LCURLY Fields RCURLY
+{
+ fun ctx ->
+ let fields = $2 ctx 1 in
+ Lambda.TmRecord({line=0}, fields)
+}
 | ID
 { 
 fun ctx ->
@@ -120,6 +129,27 @@ match (Lambda.name2index $1.i ctx $1.v) with
 {fun ctx -> Lambda.TmFloat({line=0}, $1.v)}
 ;
 
+Fields:
+{
+ fun ctx i -> []
+}
+| NEFields
+{ $1 }
+
+NEFields:
+Field
+{fun ctx i -> [$1 ctx i] }
+|Field COMMA NEFields
+{fun ctx i -> ($1 ctx i) :: ($3 ctx (i+1))}
+
+Field:
+ID EQ exp
+{
+fun ctx i ->
+ print_string "field " ;
+ print_string $1.v ;
+($1.v, $3 ctx) 
+}
 (*
 exp :
   appTerm {fun ctx -> $1 ctx}
