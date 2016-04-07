@@ -47,6 +47,7 @@ type term =
 | TmInt of info * int
 | TmLet of info * string * term * term
 | TmRecord of info * (string * term) list
+| TmProj of info * term * string
 
 type bind = NameBind
 | VarBind of ty
@@ -140,6 +141,7 @@ match t with
 | TmLet(fi,_,_,_) -> fi
 | TmInt(fi,_) -> fi
 | TmRecord(fi,_) -> fi
+| TmProj(fi,_,_) -> fi
 
 let rec print_type ty =
 match ty with
@@ -185,6 +187,7 @@ let ctx1 = addname ctx v in
      |f::rest ->
               (pf i f) ^ "," ^ (p (i+1) rest)
     in "{" ^ (p 1 fields) ^ "}"
+| TmProj(_,t,l) -> "." ^ l
 ;;
 
 let tmmap onvar c t =
@@ -204,6 +207,8 @@ TmVar(fi,x,n) -> onvar fi c x n
    (fun(li,ti) ->
     (li,walk c ti))
    fields)
+| TmProj(fi,fields,l) ->
+  TmProj(fi, walk c fields, l)
 in walk c t
 
 (* let termSift d t = *)
@@ -297,6 +302,13 @@ print_string "tmvar";
 
  in let fields' = evalfield fields in
  TmRecord(fi,fields')
+| TmProj(fi,(TmRecord(_,fields) as v),l) when isval ctx v ->
+  (match findlist (fun (x,_) -> x = l) fields with
+    Some (_,y) -> y
+   | None -> raise NoRuleApplies)
+| TmProj(fi,t,l) ->
+  let t' = eval1 ctx t in
+    TmProj(fi,t',l)
 | _ ->
     raise NoRuleApplies
 ;;
@@ -354,6 +366,8 @@ let ctx' = addbinding ctx v (VarBind (typeof ctx t1)) in
 TyRecord((List.map
 (fun(v,t) -> (v,(typeof ctx t)))
  fields))
+| TmProj(_,fields,_) ->
+  typeof ctx fields
 
 (*   *)
 let t1 = TmVar({line=1},0,1)

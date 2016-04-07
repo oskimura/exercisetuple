@@ -52,10 +52,10 @@ command :
   {fun ctx -> let t = $1 ctx in (Lambda.Eval(Lambda.tmInfo t,t),ctx)}
 
 exp:
-AppTerm {$1}
 LET ID EQ exp IN exp
 { 
 TmLet({line=0}, $2.v,($4 (addname ctx $2.v)),($6 (addname ctx $2.v)))}
+|AppTerm {$1}
 |LAMBDA ID COLON Type DOT exp
 { 
 fun ctx ->
@@ -92,7 +92,8 @@ AType ARROW ArrowType
 | AType  {print_string "atype";$1};
 
 AppTerm:
-Aterm {$1}
+PathTerm {$1}
+|Aterm {$1}
 |AppTerm Aterm
 {
 print_string "b";print_newline();
@@ -150,6 +151,13 @@ fun ctx i ->
  print_string $1.v ;
 ($1.v, $3 ctx) 
 }
+PathTerm:
+PathTerm DOT ID
+{
+fun ctx ->
+  TmProj({line=0},$1 ctx,$3.v)
+}
+|Aterm { $1 }
 (*
 exp :
   appTerm {fun ctx -> $1 ctx}
