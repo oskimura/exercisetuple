@@ -254,6 +254,7 @@ let rec isval ctx t = match t with
  | TmTrue(_) -> true
  | TmFalse(_) -> true
  | TmUnit(_) -> true
+ | TmRecord(_,fields) -> List.for_all(fun(_,ti) -> isval ctx ti) fields
  | _ -> false;;
 
 
