@@ -23,6 +23,7 @@ open Lambda
 %token <Support.Error.info> LCURLY
 %token <Support.Error.info> RCURLY
 %token <Support.Error.info> COMMA
+%token <Support.Error.info> AS
 %token <string Support.Error.withinfo> STRINGV
 %token <float Support.Error.withinfo> FLOATV
 %token <int Support.Error.withinfo> INTV
@@ -157,7 +158,13 @@ PathTerm DOT ID
 fun ctx ->
   TmProj({line=0},$1 ctx,$3.v)
 }
+|AscribeTerm { $1 }
 |Aterm { $1 }
+AscribeTerm: 
+Aterm AS Type
+{
+fun ctx -> Lambda.TmAscribe({line=0}, $1 ctx, $3 ctx)
+}
 (*
 exp :
   appTerm {fun ctx -> $1 ctx}

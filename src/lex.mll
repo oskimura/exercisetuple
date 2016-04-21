@@ -22,6 +22,7 @@ let reservedWords = [
 ("{", fun i -> Parse.LCURLY i);
 ("}", fun i -> Parse.RCURLY i);
 (",", fun i -> Parse.COMMA i);
+("as", fun i -> Parse.AS i);
 ]
 
 let stringBuffer = ref (Bytes.create 2048)
@@ -48,6 +49,8 @@ rule main = parse
  ['A'-'Z' 'a'-'z']['A'-'Z' 'a'-'z' '_' '0'-'9']*
   { createID(info lexbuf) (text lexbuf) }
 | "->"
+   { createID(info lexbuf) (text lexbuf) }
+| "as"
    { createID(info lexbuf) (text lexbuf) }
 | ['.' ';' '(' ')' ':' '=' '{' '}' ',']
    { createID(info lexbuf) (text lexbuf) }

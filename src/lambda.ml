@@ -48,6 +48,7 @@ type term =
 | TmLet of info * string * term * term
 | TmRecord of info * (string * term) list
 | TmProj of info * term * string
+| TmAscribe of info * term * ty
 
 type bind = NameBind
 | VarBind of ty
@@ -142,6 +143,7 @@ match t with
 | TmInt(fi,_) -> fi
 | TmRecord(fi,_) -> fi
 | TmProj(fi,_,_) -> fi
+| TmAscribe(fi,_,_) -> fi
 
 let rec print_type ty =
 match ty with
@@ -188,6 +190,7 @@ let ctx1 = addname ctx v in
               (pf i f) ^ "," ^ (p (i+1) rest)
     in "{" ^ (p 1 fields) ^ "}"
 | TmProj(_,t,l) -> "." ^ l
+| TmAscribe(_,tm,ty1) -> (printnm ctx tm) ^ (print_type ty1)
 ;;
 
 let tmmap onvar c t =
@@ -209,6 +212,7 @@ TmVar(fi,x,n) -> onvar fi c x n
    fields)
 | TmProj(fi,fields,l) ->
   TmProj(fi, walk c fields, l)
+| TmAscribe(fi,tm,ty1) -> TmAscribe(fi,(walk c tm), ty1)
 in walk c t
 
 (* let termSift d t = *)
@@ -309,6 +313,8 @@ print_string "tmvar";
 | TmProj(fi,t,l) ->
   let t' = eval1 ctx t in
     TmProj(fi,t',l)
+| TmAscribe(fi,tm,ty1) ->
+   eval1 ctx tm
 | _ ->
     raise NoRuleApplies
 ;;
