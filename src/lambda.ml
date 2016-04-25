@@ -11,6 +11,8 @@ type ty = TyArr of ty * ty
 | TyFloat
 | TyInt
 | TyRecord of (string * ty) list
+| TyVar of int * int
+| TyVariant of (string * ty) list
 
 type bind = NameBind
 | VarBind of ty
@@ -49,10 +51,12 @@ type term =
 | TmRecord of info * (string * term) list
 | TmProj of info * term * string
 | TmAscribe of info * term * ty
+| TmTag of info * string * term * ty
 
 type bind = NameBind
 | VarBind of ty
 | TmAbbBind of term * (ty option)
+| TyAbbBind of ty
 
 type context = (string * bind) list
 type command =
@@ -144,6 +148,7 @@ match t with
 | TmRecord(fi,_) -> fi
 | TmProj(fi,_,_) -> fi
 | TmAscribe(fi,_,_) -> fi
+| TmTag(fi,_,_,_) -> fi
 
 let rec print_type ty =
 match ty with
@@ -191,6 +196,8 @@ let ctx1 = addname ctx v in
     in "{" ^ (p 1 fields) ^ "}"
 | TmProj(_,t,l) -> "." ^ l
 | TmAscribe(_,tm,ty1) -> (printnm ctx tm) ^ (print_type ty1)
+| TmTag(fi,li,t,ty) ->
+   "<" ^ li ^ "=" ^ (printnm ctx t) ^ ">" ^ " as " ^ (print_type ty)
 ;;
 
 let tmmap onvar c t =
@@ -213,6 +220,7 @@ TmVar(fi,x,n) -> onvar fi c x n
 | TmProj(fi,fields,l) ->
   TmProj(fi, walk c fields, l)
 | TmAscribe(fi,tm,ty1) -> TmAscribe(fi,(walk c tm), ty1)
+| TmTag(fi,l,t,ty) -> TmTag(fi,l,walk c t, ty)
 in walk c t
 
 (* let termSift d t = *)
@@ -264,6 +272,7 @@ let rec isval ctx t = match t with
  | TmFalse(_) -> true
  | TmUnit(_) -> true
  | TmRecord(_,fields) -> List.for_all(fun(_,ti) -> isval ctx ti) fields
+ | TmTag(_,li,t1,ty) -> isval ctx t1
  | _ -> false;;
 
 
@@ -315,6 +324,9 @@ print_string "tmvar";
     TmProj(fi,t',l)
 | TmAscribe(fi,tm,ty1) ->
    eval1 ctx tm
+| TmTag(fi,li,t,ty) ->
+  let t1 = eval1 ctx t in
+  TmTag(fi,li,t1,ty)
 | _ ->
     raise NoRuleApplies
 ;;
@@ -324,6 +336,55 @@ in  eval ctx t'
 with NoRuleApplies -> t
 
 
+let istyabb ctx i = 
+match getbinding {line=0} ctx i with
+  TyAbbBind(tyT) -> true
+| _ -> false;;
+let gettyabb ctx i =
+match getbinding {line=0} ctx i with
+ TyAbbBind(tyT) -> tyT
+| _ -> raise NoRuleApplies;;
+let rec computery ctx tyT = match tyT with
+TyVar(i,_) when istyabb ctx i -> gettyabb ctx i
+| _ -> raise NoRuleApplies;;
+let rec simplifyty ctx tyT =
+try 
+ let tyT' = computery ctx tyT in
+ simplifyty ctx tyT'
+with NoRuleApplies -> tyT;;
+let rec tyeqv ctx tyS tyT =
+  let tyS = simplifyty ctx tyS in
+  let tyT = simplifyty ctx tyT in
+  match (tyS,tyT) with
+    (TyString,TyString) -> true
+  | (TyUnit,TyUnit) -> true
+  | (TyFloat,tyFloat) -> true
+  | (TyBool,TyBool) -> true
+  | (TyInt,TyInt) -> true
+  | (TyArr(tyS1,tyS2),TyArr(tyT1,tyT2)) ->
+     tyS1 = tyT1 && tyS2 = tyT2 
+  | (TyRecord(fields1),TyRecord(fields2)) ->
+    List.length fields1 = List.length fields2
+    &&
+    List.for_all
+     (fun (li1,tyTi2) ->
+      try let tyTi1 = List.assoc li1 fields1 in
+        tyeqv ctx tyTi1 tyTi2
+      with Not_found -> false
+     )
+     fields2
+  | (TyVariant(fields1),TyVariant(fields2)) ->
+    (List.length fields1 = List.length fields2)
+    && List.for_all2
+         (fun (li1,tyTi1) (li2,tyTi2) ->
+         (li1=li2) && (tyeqv ctx tyTi1 tyTi2))
+       fields1 fields2
+  | (TyVar(i,_),TyVar(j,_)) -> i=j
+  | (TyVar(i,_),_) when istyabb ctx i ->
+     tyeqv ctx (gettyabb ctx i) tyT
+  | (_,TyVar(i,_)) ->
+     tyeqv ctx tyS (gettyabb ctx i)
+  | _ -> false
 let rec typeof ctx t = 
 match t with
 (*
@@ -375,6 +436,17 @@ TyRecord((List.map
 | TmProj(_,fields,_) ->
   typeof ctx fields
 
+| TmTag(fi,li,t1,tyT) ->
+  (match simplifyty ctx tyT with
+  TyVariant(fieldtys) ->
+    (try
+     let tyExcpectd = List.assoc li fieldtys in
+     let tyTi = typeof ctx t1 in
+     if (=) tyTi tyExcpectd
+     then tyT
+     else TyWrong ""
+     with Not_found -> TyWrong "")
+  |_ -> TyWrong "")
 (*   *)
 let t1 = TmVar({line=1},0,1)
 let ta1 = TmAbs({line=1},"x",t1)
@@ -383,3 +455,9 @@ let ta2 = TmApp({line=1},ta1,t1)
 (* let ta1 = TmAbs({line=1},"x",t1) *)
 (* let ta2 = TmApp({line=1},ta1,t1) *)
 
+let printbind ctx bind =
+match bind with
+  TmAbbBind(t,_) -> (printnm ctx t) ^ " ; "
+| VarBind(ty) -> ":" ^ print_type ty
+| NameBind -> ""
+| TyAbbBind(tyT) -> "=" ^ (print_type tyT)

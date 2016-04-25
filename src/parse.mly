@@ -24,6 +24,8 @@ open Lambda
 %token <Support.Error.info> RCURLY
 %token <Support.Error.info> COMMA
 %token <Support.Error.info> AS
+%token <Support.Error.info> LT
+%token <Support.Error.info> GT
 %token <string Support.Error.withinfo> STRINGV
 %token <float Support.Error.withinfo> FLOATV
 %token <int Support.Error.withinfo> INTV
@@ -123,6 +125,11 @@ match (Lambda.name2index $1.i ctx $1.v) with
    raise NoRuleApplies
 };
 }
+| LT ID EQ exp GT AS Type
+ {
+  fun ctx ->
+    TmTag({line=0}, $2.v, $4 ctx, $7 ctx)
+ }
 | STRINGV
 {fun ctx -> Lambda.TmString({line=0},$1.v)}
 | INTV
