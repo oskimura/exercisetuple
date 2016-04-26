@@ -435,6 +435,10 @@ TyRecord((List.map
  fields))
 | TmProj(_,fields,_) ->
   typeof ctx fields
+| TmAscribe(fi,tm,ty1) ->
+  if (=) (typeof ctx tm) ty1
+  then ty1
+  else TyWrong ""
 
 | TmTag(fi,li,t1,tyT) ->
   (match simplifyty ctx tyT with
