@@ -129,6 +129,8 @@ let rec getbinding fi ctx i =
 let getTypeFromContext fi ctx i =
   match getbinding fi ctx i with
     VarBind(ty) -> Some (ty)
+  | TmAbbBind(_,Some(tyT)) -> Some(tyT)
+  | TmAbbBind(_,None) -> None
   | _ -> None;;
 
 let tmInfo t =
@@ -199,7 +201,12 @@ let ctx1 = addname ctx v in
 | TmAscribe(_,tm,ty1) -> (printnm ctx tm) ^ (print_type ty1)
 | TmTag(fi,li,t,ty) ->
    "<" ^ li ^ "=" ^ (printnm ctx t) ^ ">" ^ " as " ^ (print_type ty)
+| VarBind(ty) -> "varbind" ^ (print_type ty)
 | TyVarBind -> "tyvarbind"
+| TmAbbBind(tm,ty1) ->
+(let ty =
+  (match ty1 with
+   Some(t) -> print_type t
 | TyAbbBind(ty) ->  (print_type ty)
 ;;
 

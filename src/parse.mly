@@ -58,6 +58,20 @@ command :
     fun ctx ->
        ((Bind({line=0}, $1.v, $2 ctx)), Lambda.addname ctx $1.v)
 }
+|ID Binder
+{
+ fun ctx -> ((Bind({line=0}, $1.v, $2 ctx)), Lambda.addname ctx $1.v)
+}
+Binder:
+COLON Type
+{
+fun ctx -> VarBind($2 ctx)
+}
+| EQ exp
+{
+fun ctx -> TmAbbBind($2 ctx, None)
+}
+
 TyBinder :
    {fun ctx -> Lambda.TyVarBind}
 | EQ Type
