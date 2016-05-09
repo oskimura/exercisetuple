@@ -53,6 +53,15 @@ let cmds,ctx = $3 ctx in
 command :
  exp 
   {fun ctx -> let t = $1 ctx in (Lambda.Eval(Lambda.tmInfo t,t),ctx)}
+|ID TyBinder
+{
+    fun ctx ->
+       ((Bind({line=0}, $1.v, $2 ctx)), Lambda.addname ctx $1.v)
+}
+TyBinder :
+   {fun ctx -> Lambda.TyVarBind}
+| EQ Type
+   {fun ctx -> TyAbbBind($2 ctx)}
 
 exp:
 LET ID EQ exp IN exp

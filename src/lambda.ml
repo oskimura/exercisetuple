@@ -55,6 +55,7 @@ type term =
 
 type bind = NameBind
 | VarBind of ty
+| TyVarBind
 | TmAbbBind of term * (ty option)
 | TyAbbBind of ty
 
@@ -198,6 +199,8 @@ let ctx1 = addname ctx v in
 | TmAscribe(_,tm,ty1) -> (printnm ctx tm) ^ (print_type ty1)
 | TmTag(fi,li,t,ty) ->
    "<" ^ li ^ "=" ^ (printnm ctx t) ^ ">" ^ " as " ^ (print_type ty)
+| TyVarBind -> "tyvarbind"
+| TyAbbBind(ty) ->  (print_type ty)
 ;;
 
 let tmmap onvar c t =
@@ -465,3 +468,4 @@ match bind with
 | VarBind(ty) -> ":" ^ print_type ty
 | NameBind -> ""
 | TyAbbBind(tyT) -> "=" ^ (print_type tyT)
+| TyVarBind -> ""
