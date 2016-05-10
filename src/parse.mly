@@ -110,7 +110,27 @@ LPAREN Type RPAREN
 {fun ctx -> Lambda.TyInt}
 |FLOAT
 {fun ctx -> Lambda.TyFloat}
+| LT FieldTypes GT
+   {
+     fun ctx ->
+        Lambda.TyVariant($2 ctx 1)
+   }
+FieldTypes :
+    { fun ctx i -> [] }
+  | NEFieldTypes
+     { $1 }
 
+NEFieldTypes :
+  FieldType
+    { fun ctx i -> [$1 ctx i] }
+  | FieldType COMMA NEFieldTypes
+    { fun ctx i -> ($1 ctx i) :: ($3 ctx (i+1)) }
+
+FieldType :
+   ID COLON Type
+    { fun ctx i -> ($1.v, $3 ctx) }
+  | Type
+    { fun ctx i -> (string_of_int i, $1 ctx) }
 
 ArrowType:
 AType ARROW ArrowType
