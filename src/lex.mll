@@ -23,6 +23,7 @@ let reservedWords = [
 ("}", fun i -> Parse.RCURLY i);
 (",", fun i -> Parse.COMMA i);
 ("as", fun i -> Parse.AS i);
+("as", fun i -> print_string " as ";Parse.AS i);
 ("<", fun i -> Parse.LT i);
 (">", fun i -> Parse.GT i);
 ]
