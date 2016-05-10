@@ -13,6 +13,7 @@ type ty = TyArr of ty * ty
 | TyRecord of (string * ty) list
 | TyVar of int * int
 | TyVariant of (string * ty) list
+| TyId of string
 
 type bind = NameBind
 | VarBind of ty
@@ -403,6 +404,7 @@ let rec tyeqv ctx tyS tyT =
      tyeqv ctx (gettyabb ctx i) tyT
   | (_,TyVar(i,_)) ->
      tyeqv ctx tyS (gettyabb ctx i)
+  | (TyId(a),TyId(b)) -> a=b
   | _ -> false
 let rec typeof ctx t = 
 match t with
