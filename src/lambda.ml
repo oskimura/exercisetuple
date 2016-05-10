@@ -155,11 +155,20 @@ match t with
 
 let rec print_type ty =
 match ty with
-|TyUnit -> "unit"
+TyUnit -> "unit"
 |TyBool -> "bool"
+|TyWrong(error) ->  "tywrong" ^ error
+|TyString -> "string"
+|TyFloat -> "float"
+|TyInt -> "int"
 |TyArr(ty1,ty2) -> print_type ty1 ^ " -> " ^ print_type ty2
 | _ -> "error"
  
+|TyVar(i,n) -> "var" ^ string_of_int i ^ string_of_int n
+|TyVariant(fields) -> "variant" ^ String.concat " " (List.map(fun(str,ty) -> str ^ (print_type ty)) fields)
+|TyRecord(fields) -> "record" ^ String.concat " " (List.map(fun(str,ty) -> str ^ (print_type ty)) fields)
+|TyId(id) -> "id" ^ id
+
 let rec printnm ctx t = match t with
   TmAbs (fi,x,ty,t1) ->
 let (ctx',x') = pickfreshname ctx x in
