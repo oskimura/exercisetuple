@@ -211,13 +211,26 @@ let ctx1 = addname ctx v in
 | TmAscribe(_,tm,ty1) -> (printnm ctx tm) ^ (print_type ty1)
 | TmTag(fi,li,t,ty) ->
    "<" ^ li ^ "=" ^ (printnm ctx t) ^ ">" ^ " as " ^ (print_type ty)
+and
+print_ctx ctx =    
+    print_string "[ ";
+  List.iter (fun (str,bind) -> 
+let b' = match bind with
+  NameBind -> "namebind"
 | VarBind(ty) -> "varbind" ^ (print_type ty)
 | TyVarBind -> "tyvarbind"
 | TmAbbBind(tm,ty1) ->
 (let ty =
   (match ty1 with
    Some(t) -> print_type t
+| None -> "none")
+in
+   " tmabbbind" ^ (printnm ctx tm) ^ "::" ^ ty)
 | TyAbbBind(ty) ->  (print_type ty)
+in
+   print_string ("(" ^ str ^ "," ^ b' ^ ")")) 
+ctx;
+print_string " ]"
 ;;
 
 let tmmap onvar c t =
