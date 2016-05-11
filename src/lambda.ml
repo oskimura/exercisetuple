@@ -473,8 +473,11 @@ let ctx' = addbinding ctx v (VarBind (typeof ctx t1)) in
 TyRecord((List.map
 (fun(v,t) -> (v,(typeof ctx t)))
  fields))
-| TmProj(_,fields,_) ->
-  typeof ctx fields
+(* | TmProj(_,fields,_) -> *)
+(*   typeof ctx fields *)
+(* let rec tymap onvar c tyT = *)
+(* let lec walk c tyT = match tyT with *)
+(* in walk c tyT, *)
 | TmAscribe(fi,tm,ty1) ->
   if (=) (typeof ctx tm) ty1
   then ty1
@@ -491,6 +494,14 @@ TyRecord((List.map
      else TyWrong ""
      with Not_found -> TyWrong "")
   |_ -> TyWrong "")
+| TmProj(_,t1,l)->
+print_string " tmproj ";
+  (match simplifyty ctx (typeof ctx t1) with
+   TyRecord(fieldtys) ->
+     (try List.assoc l fieldtys
+      with Not_found -> TyWrong "")
+   |_-> TyWrong "")
+
 (*   *)
 let t1 = TmVar({line=1},0,1)
 let ta1 = TmAbs({line=1},"x",t1)
