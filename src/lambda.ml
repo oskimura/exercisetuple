@@ -380,6 +380,12 @@ match getbinding {line=0} ctx i with
 let rec computery ctx tyT = match tyT with
 TyVar(i,_) when istyabb ctx i -> gettyabb ctx i
 | _ -> raise NoRuleApplies;;
+let rec computery ctx tyT =
+match tyT with
+TyVar(i,_) when istyabb ctx i -> 
+   gettyabb ctx i
+| _ ->
+   raise NoRuleApplies;;
 let rec simplifyty ctx tyT =
 try 
  let tyT' = computery ctx tyT in
