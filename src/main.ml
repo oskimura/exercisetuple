@@ -20,12 +20,19 @@ let ctx'' =
                print_string (Lambda.printnm ctx' (Lambda.eval ctx' t));
                ctx'
          | Lambda.Bind(i,x,b) ->
-         (match b with 
-          Lambda.TmAbbBind(t,ty) ->
-          let t' = Lambda.eval ctx' t in
-                 Lambda.addbinding ctx' x (Lambda.TmAbbBind(t',ty))
-          | bind ->
-          Lambda.addbinding ctx' x bind)
+         let bind' = 
+         (match b with
+             Lambda.TmAbbBind(t,None) ->
+               (Lambda.TmAbbBind(t, Some(Lambda.typeof ctx' t)))
+            | Lambda.TmAbbBind(t,Some(tyT)) -> 
+               let tyT' = Lambda.typeof ctx' t in
+               Lambda.TmAbbBind(t,Some(tyT')) 
+               then Lambda.TmAbbBind(t,Some(tyT)) *)
+            | bind ->
+               Lambda.print_ctx ctx';
+               bind) in
+           Lambda.print_ctx ctx';
+           Lambda.addbinding ctx' x bind'
 )
 cmds
 ctx

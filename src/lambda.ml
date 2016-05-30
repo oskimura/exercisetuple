@@ -1,5 +1,6 @@
 (* open hashtbl;; *)
 open List;;
+open String;;
 
 type info = {line : int}
 
@@ -53,6 +54,7 @@ type term =
 | TmProj of info * term * string
 | TmAscribe of info * term * ty
 | TmTag of info * string * term * ty
+| TmCase of info * term * (string * (string * term)) list
 
 type bind = NameBind
 | VarBind of ty
@@ -153,6 +155,7 @@ match t with
 | TmProj(fi,_,_) -> fi
 | TmAscribe(fi,_,_) -> fi
 | TmTag(fi,_,_,_) -> fi
+| TmCase(fi,_,_) -> fi
 
 let rec print_type ty =
 match ty with
@@ -211,6 +214,8 @@ let ctx1 = addname ctx v in
 | TmAscribe(_,tm,ty1) -> (printnm ctx tm) ^ (print_type ty1)
 | TmTag(fi,li,t,ty) ->
    "<" ^ li ^ "=" ^ (printnm ctx t) ^ ">" ^ " as " ^ (print_type ty)
+| TmCase(_,t1,t2) ->
+   "Case " ^ (printnm ctx t1) ^ String.concat " " (List.map (fun (x,(y,body))->  x ^ y ^ (printnm ctx body) ) t2)
 and
 print_ctx ctx =    
     print_string "[ ";
@@ -254,7 +259,26 @@ TmVar(fi,x,n) -> onvar fi c x n
   TmProj(fi, walk c fields, l)
 | TmAscribe(fi,tm,ty1) -> TmAscribe(fi,(walk c tm), ty1)
 | TmTag(fi,l,t,ty) -> TmTag(fi,l,walk c t, ty)
+| TmCase(fi,t1,t2) ->
+   TmCase(fi,walk c t, t2)
 in walk c t
+
+
+let tymap onvar c tyT =
+  let rec walk c tyT = match tyT with
+    TyVar(x,n) -> onvar c x n
+  | TyId(b) as tyT -> tyT
+  | TyString -> TyString
+  | TyUnit -> TyUnit
+  | TyRecord(fieldttys) -> TyRecord(List.map (fun(li,tyTi) -> (li, walk c tyTi)) fieldttys)
+  | TyFloat -> TyFloat
+  | TyBool -> TyBool
+  | TyInt -> TyInt
+  | TyArr(tyT1,tyT2) -> TyArr(walk c tyT1, walk c tyT2)
+  | TyVariant(fieldstys) -> TyVariant(List.map(fun (li,tyTi) -> (li, walk c tyTi)) fieldstys)
+  | _ -> TyWrong ""
+  in walk c tyT
+;;
 
 (* let termSift d t = *)
 (*   let rec walk c t = match t with *)
@@ -275,6 +299,12 @@ let termShiftAbove d c t =
 
 let termShift d t = termShiftAbove d 0 t
 
+
+
+let typeShiftAbove d c tyT =
+  tymap (fun c x n -> if x>= c then TyVar(x+d,n+d) else TyVar(x,n+d)) c tyT
+  
+let typeShift d tyT = typeShiftAbove d 0 tyT
 
 (* let termSubst j s t = *)
 (*   let rec walk c t = match t with *)
@@ -360,6 +390,12 @@ print_string "tmvar";
 | TmTag(fi,li,t,ty) ->
   let t1 = eval1 ctx t in
   TmTag(fi,li,t1,ty)
+| TmCase(_,TmTag(_,li,v1,_),t2) ->
+  let (x,body) = List.assoc li t2 in
+   termSubstTop v1 body
+| TmCase(fi,t1, t2) ->
+ let t1' = eval1 ctx t1 in
+ TmCase(fi,t1',t2)
 | _ ->
     raise NoRuleApplies
 ;;
@@ -501,6 +537,23 @@ print_string " tmproj ";
      (try List.assoc l fieldtys
       with Not_found -> TyWrong "")
    |_-> TyWrong "")
+|TmCase(_,t1,cases) ->
+  (match simplifyty ctx (typeof ctx t1) with
+  TyVariant(fieldtys) ->
+  let casetypes =
+    List.map (fun (li,(xi,ti)) ->
+              let tyTi =
+                try List.assoc li fieldtys
+                with Not_found ->
+                  TyWrong ""
+              in
+              let ctx' = addbinding ctx xi (VarBind(tyTi))
+              in typeShift (-1) (typeof ctx' ti))
+          cases
+  in
+  let tyT1 = List.hd casetypes in
+  tyT1
+  |_->TyWrong "")
 
 (*   *)
 let t1 = TmVar({line=1},0,1)

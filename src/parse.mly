@@ -26,6 +26,10 @@ open Lambda
 %token <Support.Error.info> AS
 %token <Support.Error.info> LT
 %token <Support.Error.info> GT
+%token <Support.Error.info> CASE
+%token <Support.Error.info> OF
+%token <Support.Error.info> DDARROW
+%token <Support.Error.info> VBAR
 %token <string Support.Error.withinfo> STRINGV
 %token <float Support.Error.withinfo> FLOATV
 %token <int Support.Error.withinfo> INTV
@@ -88,6 +92,12 @@ fun ctx ->
 let ctx1 = Lambda.addname ctx $2.v in
 TmAbs({line=0},$2.v, $4 ctx, ($6 ctx1))
 };
+| CASE exp OF Cases
+{
+  fun ctx ->
+    Lambda.TmCase({line=0}, $2 ctx, $4 ctx)
+}
+;
 
 
 Type: 
@@ -115,6 +125,17 @@ LPAREN Type RPAREN
      fun ctx ->
         Lambda.TyVariant($2 ctx 1)
    }
+| ID
+{
+  fun ctx ->
+ match (Lambda.name2index $1.i ctx $1.v) with
+  Some(i) ->
+print_string "i: "; print_int i;
+    Lambda.TyVar(i, Lambda.ctxlength ctx)
+  |None ->
+   Lambda.TyId($1.v)
+}
+
 FieldTypes :
     { fun ctx i -> [] }
   | NEFieldTypes
@@ -181,6 +202,24 @@ match (Lambda.name2index $1.i ctx $1.v) with
 {fun ctx -> Lambda.TmFloat({line=0}, $1.v)}
 ;
 
+Cases :
+Case
+{
+  fun ctx ->
+  [$1 ctx]
+}
+| Case VBAR Cases
+{
+  fun ctx ->
+    ($1 ctx) :: ($3 ctx)
+}
+Case:
+LT ID EQ ID GT DDARROW exp
+{
+  fun ctx ->
+    let ctx1 = Lambda.addname ctx $4.v in
+    ($2.v, ($4.v, $7 ctx1))
+}
 Fields:
 {
  fun ctx i -> []
