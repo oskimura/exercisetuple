@@ -30,6 +30,7 @@ open Lambda
 %token <Support.Error.info> OF
 %token <Support.Error.info> DDARROW
 %token <Support.Error.info> VBAR
+%token <Support.Error.info> LETREC
 %token <string Support.Error.withinfo> STRINGV
 %token <float Support.Error.withinfo> FLOATV
 %token <int Support.Error.withinfo> INTV
@@ -96,6 +97,14 @@ TmAbs({line=0},$2.v, $4 ctx, ($6 ctx1))
 {
   fun ctx ->
     Lambda.TmCase({line=0}, $2 ctx, $4 ctx)
+}
+| LETREC ID COLON Type EQ exp IN exp
+{
+  fun ctx ->
+    let ctx' = Lambda.addname ctx $2.v in
+    Lambda.TmLet({line=0}, $2.v,
+               TmFix({line=0}, TmAbs({line=0},$2.v, ($4 ctx), ($6 ctx'))),
+               ($8 ctx'))
 }
 ;
 
