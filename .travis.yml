@@ -1,11 +1,8 @@
-language: c
+language: python
+python:
+  - '2.7'
+install: "bash -ex .travis-ocaml.sh; opam install -y omake"
 sudo: required
-install: wget https://raw.githubusercontent.com/ocaml/ocaml-ci-scripts/master/.travis-opam.sh
-script: bash -ex .travis-opam.sh
+script: $HOME/.opam/system/bin/omake test
 env:
-        - OCAML_VERSION=4.00
-        - OCAML_VERSION=4.01
-        - OCAML_VERSION=4.02
-os:
-        - linux
-        - osx
+  - OCAML_VERSION=4.02
