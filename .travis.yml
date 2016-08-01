@@ -3,6 +3,6 @@ python:
   - '2.7'
 install: "bash -ex .travis-ocaml.sh; opam install -y omake"
 sudo: required
-script: omake test
+script: $HOME/.opam/system/bin/omake test
 env:
   - OCAML_VERSION=4.02
