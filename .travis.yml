@@ -1,7 +1,7 @@
 language: python
 python:
   - '2.7'
-install: "pip install -r .install.txt; bash -ex .travis-ocaml.sh; opam install omake"
+install: "bash -ex .travis-ocaml.sh; opam install omake"
 sudo: required
 script: omake test
 env:
