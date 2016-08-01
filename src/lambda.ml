@@ -55,6 +55,7 @@ type term =
 | TmAscribe of info * term * ty
 | TmTag of info * string * term * ty
 | TmCase of info * term * (string * (string * term)) list
+| TmFix of info * term
 
 type bind = NameBind
 | VarBind of ty
@@ -156,6 +157,7 @@ match t with
 | TmAscribe(fi,_,_) -> fi
 | TmTag(fi,_,_,_) -> fi
 | TmCase(fi,_,_) -> fi
+| TmFix(fi,_) -> fi
 
 let rec print_type ty =
 match ty with
@@ -216,6 +218,8 @@ let ctx1 = addname ctx v in
    "<" ^ li ^ "=" ^ (printnm ctx t) ^ ">" ^ " as " ^ (print_type ty)
 | TmCase(_,t1,t2) ->
    "Case " ^ (printnm ctx t1) ^ String.concat " " (List.map (fun (x,(y,body))->  x ^ y ^ (printnm ctx body) ) t2)
+| TmFix(_,t1) ->
+  "TmFix" ^ (printnm ctx t1)
 and
 print_ctx ctx =    
     print_string "[ ";
@@ -261,6 +265,8 @@ TmVar(fi,x,n) -> onvar fi c x n
 | TmTag(fi,l,t,ty) -> TmTag(fi,l,walk c t, ty)
 | TmCase(fi,t1,t2) ->
    TmCase(fi,walk c t, t2)
+| TmFix(fi,t1) ->
+  TmFix(fi,walk c t1)
 in walk c t
 
 
@@ -396,6 +402,14 @@ print_string "tmvar";
 | TmCase(fi,t1, t2) ->
  let t1' = eval1 ctx t1 in
  TmCase(fi,t1',t2)
+| TmFix(fi,v) as t when isval ctx v ->
+  (match v with
+    TmAbs(_,_,_,t2) ->
+    termSubstTop t t2
+   | _ -> raise NoRuleApplies)
+| TmFix(fi,t1) ->
+  let t1' = eval1 ctx t1 in
+  TmFix(fi,t1')
 | _ ->
     raise NoRuleApplies
 ;;
@@ -554,6 +568,13 @@ print_string " tmproj ";
   let tyT1 = List.hd casetypes in
   tyT1
   |_->TyWrong "")
+| TmFix(_,t1) ->
+ let ty1 = typeof ctx t1 in
+ (match (simplifyty ctx ty1) with
+    TyArr(ty11,ty12) ->
+      if (tyeqv ctx ty11 ty12) then ty11
+      else TyWrong ""
+    |_-> TyWrong "")
 
 (*   *)
 let t1 = TmVar({line=1},0,1)

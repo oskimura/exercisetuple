@@ -30,6 +30,7 @@ let reservedWords = [
 ("==>", fun i -> Parse.DDARROW i);
 ("|", fun i -> Parse.VBAR i);
 ("of", fun i -> Parse.OF i);
+("letrec", fun i -> Parse.LETREC i);
 ]
 
 let stringBuffer = ref (Bytes.create 2048)
